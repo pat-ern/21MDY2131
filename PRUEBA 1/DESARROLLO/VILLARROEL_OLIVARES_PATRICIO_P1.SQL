@@ -1,0 +1,141 @@
+-- CASO 1
+
+SELECT
+
+TO_CHAR(SUBSTR(RUN_CLI, 0, 8), '99G999G999')||'-'||SUBSTR(RUN_CLI, -1, 1) AS RUN_CLIENTE,
+NOM_CLI||' '||APAT_CLI||' '||AMAT_CLI AS NOMBRE_CLIENTE_COMPLETO,
+TO_CHAR(SUELDO_BRUTO, 'l999G999G999') AS SALARIO_BRUTO,
+TO_CHAR(ROUND(SUELDO_BRUTO*0.8), 'l999G999G999') AS SALARIO_LIQUIDO_APROX,
+TO_CHAR(ROUND(SUELDO_BRUTO*0.2), 'l999G999G999') AS DESCUENTOS_APROX_LEYES,
+TO_CHAR(FECHA_NACIMIENTO, 'DAY DD-MM-YYYY') AS FECHA_NACIMIENTO,
+NVL(TO_CHAR(CELULAR), 'NO REGISTRA') AS CELULAR,
+TO_CHAR(FECHA_ING_BANCO, 'DAY DD-MM-YYYY') AS FECHA_INGRESO_BANCO,
+TO_CHAR(SYSDATE, 'MM/YYYY') AS FECHA_EJECUCION
+FROM CLIENTE
+WHERE EXTRACT(MONTH FROM FECHA_ING_BANCO) >= EXTRACT(MONTH FROM SYSDATE)-2 
+AND EXTRACT(MONTH FROM FECHA_ING_BANCO) <= EXTRACT(MONTH FROM SYSDATE)
+ORDER BY FECHA_ING_BANCO;
+
+
+-- CASO 2
+
+SELECT
+TO_CHAR(SYSDATE, 'MONTH YYYY') AS "FECHA SENTENCIA",
+
+SUBSTR(TO_CHAR(RUN_CLI), 1, 3)|| --  los 3 primeros dígitos del run del cliente
+SUBSTR(CAT_TARJETA, 1, 1)|| -- + el primer carácter del código de la TARJETA 
+SUBSTR(TO_CHAR(RUN_CLI), 4, 2)|| -- + los dos siguientes dígitos del run 
+SUBSTR(CAT_TARJETA, 2, 1)|| -- + el segundo carácter del código de la TARJETA 
+SUBSTR(TO_CHAR(RUN_CLI), 6, 3)|| -- + los 3 siguientes dígitos del run 
+SUBSTR(CAT_TARJETA, -1, 1) -- + el ultimo carácter del código de la TARJETA, 
+AS "NRO DE CUENTA",
+
+FECHA_APERTURA AS "APERTURA CUENTA",
+
+TO_CHAR(MONTO_SOLICITADO, 'L999G999G999') AS "MONTO SOLICITUD CUENTA",
+
+CASE CAT_TARJETA 
+	WHEN 'VIS' THEN 'CUENTA VISTA'
+	WHEN 'AHO' THEN 'CUENTA DE AHORRO'
+	WHEN 'COR' THEN 'CUENTA CORRIENTE'
+	WHEN 'PRE' THEN 'CUENTA PREPAGO'
+END AS "TIPO DE CUENTA",
+
+CASE ESTADO
+	WHEN 'S' THEN 'CUENTA ACEPTADA'
+	ELSE 'CUENTA RECHAZADA'
+END AS "ESTADO CUENTA FINAL"
+
+FROM PRODUCTO_CLIENTE
+
+WHERE ESTADO IN('S') AND TO_CHAR(SYSDATE, 'MM/YYYY')=TO_CHAR(FECHA_APERTURA, 'MM/YYYY')
+
+ORDER BY FECHA_APERTURA;
+
+-- CASO 3
+
+SELECT
+TO_CHAR(COD_EMP, '99G99G99G99G99') AS "CODIGO EMPLEADO",
+
+NOM_EMP||' '||APAT_EMP||' '||AMAT_EMP AS "NOMBRE COMPLETO EMPLEADO",
+
+FECHA_CONTRATO AS "FECHA CONTRATO",
+
+TO_CHAR(SUELDO_BRUTO, 'L9G999G999') AS "SUELDO PACTADO",
+
+TRUNC(MONTHS_BETWEEN(SYSDATE, FECHA_CONTRATO)/12) AS "ANNOS",
+
+TO_CHAR(SUELDO_BRUTO*(ROUND(MONTHS_BETWEEN(SYSDATE, FECHA_CONTRATO)/12)/100), 'L999G999') AS "BONO ANTIGUEDAD",
+
+CASE TPCOD_EMP
+    WHEN 'EJE' THEN 'EJECUTIVO DE CUENTAS'
+    ELSE 'SUPERVISOR DE EJECUTIVOS'
+END AS "CARGO EMPLEADO",
+
+TO_CHAR(SUELDO_BRUTO*(CASE TPCOD_EMP
+    WHEN 'EJE' THEN 0.05
+    ELSE 0.2
+END), 'L999G999') AS "BONO POR CARGO",
+
+TO_CHAR(SUELDO_BRUTO*SEGURO_OBLIGATORIO/100, 'L999G999') AS "DESC SEG OBLIGATORIO",
+
+TO_CHAR(SUELDO_BRUTO*AFP/100,'L999G999') AS "DESC OBLI AFP", 
+
+TO_CHAR(SUELDO_BRUTO*7/100, 'L999G999') AS "DESC SALUD",
+
+TO_CHAR(SUELDO_BRUTO + -- SUELDO BRUTO
+SUELDO_BRUTO*(ROUND(MONTHS_BETWEEN(SYSDATE, FECHA_CONTRATO)/12)/100) + -- BONO ANTIGUEDAD
+SUELDO_BRUTO*(CASE TPCOD_EMP WHEN 'EJE' THEN 0.05 ELSE 0.2 END), 'L9G999G999') -- BONO X CARGO
+AS "TOTAL IMPONIBLE",
+
+TO_CHAR(SUELDO_BRUTO*SEGURO_OBLIGATORIO/100+
+SUELDO_BRUTO*AFP/100+
+SUELDO_BRUTO*7/100, 'L999G999')
+AS "TOTAL DESCUENTOS",
+
+TO_CHAR(SUELDO_BRUTO + -- SUELDO BRUTO
+SUELDO_BRUTO*(ROUND(MONTHS_BETWEEN(SYSDATE, FECHA_CONTRATO)/12)/100) + -- BONO ANTIGUEDAD
+SUELDO_BRUTO*(CASE TPCOD_EMP WHEN 'EJE' THEN 0.05 ELSE 0.2 END)- -- BONO X CARGO
+SUELDO_BRUTO*SEGURO_OBLIGATORIO/100- --SEGURO OBLIGATORIO
+SUELDO_BRUTO*AFP/100- -- AFP
+SUELDO_BRUTO*7/100, 'L9G999G999') -- SALUD
+
+AS "TOTAL LIQUIDO AS PAGAR"
+
+FROM EMPLEADO
+
+WHERE TRUNC(MONTHS_BETWEEN(SYSDATE, FECHA_CONTRATO)/12) >= 9 AND
+SUELDO_BRUTO*SEGURO_OBLIGATORIO/100 > 120000
+
+ORDER BY COD_EMP DESC, FECHA_CONTRATO ASC;
+
+
+/*
+
+Según la información del Caso 3, ¿Cuál es el problema que se debe resolver?
+
+- Se debe realizar una gran cantidad de cálculos relacionados a renta, descuentos, bonos, que están parcialmente en la base de datos, y otros deben ser generados
+
+¿Cuál es la información significativa que necesita para resolver el problema?
+
+- Se requieren porcentajes de bono y descuentos, junto a las condiciones para esos porcentajes, además de sueldo base
+
+PLAN DE ACCIÓN
+
+¿Cuál es el propósito de la solución que se requiere?
+
+- El propósito es agilizar procesos que normalmente se realizaban a mano y con hojas de cálculo, que producían errores, e información no confiable
+
+La solución que se requiere, en qué va a mejorar el negocio:
+
+Detalle, en lenguaje natural, los pasos para construir la solución al problema planteado.
+
+1 se deben identificar las columnas a mostrar
+2 luego se identifican aquellas que tienen valores almacenados en la base de datos
+3 posteriormente se identifican aquellos que son calculados o derivados
+4 de desarrollan los valores almacenados primero
+5 se escriben sentencias de calculo para valores derivados
+6 se escriben sentencias que replican calculos ya desarrollados en columnas anteriores
+7 se compara el resultado con los requerimientos detallados en el documento
+
+*/
