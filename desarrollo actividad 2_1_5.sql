@@ -20,7 +20,7 @@ GROUP BY carreraid
 HAVING COUNT(*)>4
 ORDER BY CARRERA;
 
--- caso 3
+-- caso 333
 
 SELECT
 TO_CHAR(run_jefe, '09G999G999') AS "RUN JEFE SIN DV",
