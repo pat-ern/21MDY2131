@@ -1,0 +1,50 @@
+-- CASO 1
+
+SELECT
+'El empleado '||nombre_emp||' '||appaterno_emp||' '||apmaterno_emp||' nació el '||to_char(fecnac_emp, 'DD/MM/YYYY') "LISTADO DE CUMPLEAÑOS"
+FROM EMPLEADO
+ORDER BY fecnac_emp ASC, appaterno_emp ASC;
+
+-- CASO 2
+
+SELECT
+numrut_cli||'-'||dvrut_cli AS "NUMERO RUT",
+nombre_cli||' '||appaterno_cli||' '||apmaterno_cli AS "NOMBRE CLIENTE",
+renta_cli AS "RENTA",
+fonofijo_cli AS "TELEFONO FIJO",
+CASE WHEN (celular_cli IS NULL) THEN 0 ELSE celular_cli END AS CELULAR
+FROM cliente
+ORDER BY appaterno_cli, apmaterno_cli;
+
+-- CASO 3
+
+SELECT
+nombre_emp||' '||appaterno_emp||' '||apmaterno_emp AS "NOMBRE EMPLEADO",
+sueldo_emp AS "SUELDO",
+(sueldo_emp*50/100) AS "BONO POR CAPACITACIÓN"
+FROM empleado
+ORDER BY sueldo_emp*0.5 DESC;
+
+-- CASO 4
+
+SELECT
+NRO_PROPIEDAD AS "NRO PROPIEDAD",
+NUMRUT_PROP AS "RUT PROPIETARIO",
+DIRECCION_PROPIEDAD AS "DIRECCION",
+VALOR_ARRIENDO AS "VALOR ARRIENDO",
+VALOR_ARRIENDO*0.054 AS "VALOR COMPENSACIÓN"
+FROM PROPIEDAD
+ORDER BY NUMRUT_PROP ASC;
+
+-- CASO 5
+
+SELECT
+NUMRUT_EMP||'-'||DVRUT_EMP AS "RUN EMPLEADO",
+NOMBRE_EMP||'-'||APPATERNO_EMP||'-'||APPMATERNO AS "NOMBRE COMPLETO",
+SUELDO_EMP AS "SALARIO ACTUAL",
+SUELDO_EMP+SUELDO_EMP*0.135 AS "SALARIO REAJUSTADO", -- SUELDO_EMP*1.135 VALE TAMBIEN
+SUELDO_EMP*0.135 AS "REAJUSTE"
+FROM EMPLEADO
+ORDER BY SUELDO_EMP*0.135 ASC, APPATERNO_EMP ASC;
+
+-- CASO 6
