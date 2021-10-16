@@ -176,7 +176,9 @@ EXTRACT(YEAR FROM SYSDATE),
 cli.appaterno,
 TO_CHAR(cli.numrun, 'FM09G999G999')||'-'||cli.dvrun,
 INITCAP(cli.pnombre)||' '||UPPER(SUBSTR(cli.snombre, 1, 1))||' '||INITCAP(cli.appaterno)||' '||INITCAP(cli.apmaterno)
-ORDER BY cli.appaterno;
+ORDER BY 
+cli.appaterno,
+SUM(pric.monto_total_ahorrado+pric.ahorro_minimo_mensual);
 
 -- CASO 6 A
 
@@ -217,5 +219,65 @@ GROUP BY
 TO_CHAR(cli.numrun, 'FM09G999G999')||'-'||cli.dvrun,
 INITCAP(cli.pnombre)||' '||INITCAP(cli.snombre)||' '||INITCAP(cli.appaterno)||' '||INITCAP(cli.apmaterno),
 cli.appaterno,
-mov.cod_tipo_mov
+mov.cod_tipo_mov -- esta agrupación genera doble fila
+ORDER BY cli.appaterno;
+
+-- CASO 6 B vers profe
+
+SELECT
+cli.NRO_CLIENTE, cli.NUMRUN, cli.DVRUN, cli.PNOMBRE, cli.SNOMBRE, cli.APPATERNO, cli.APMATERNO,
+
+NVL(TO_CHAR(SUM(
+CASE
+    WHEN mv.cod_tipo_mov = 1 THEN mv.monto_movimiento
+    ELSE NULL
+END), 'FML99G999G999'), 'No realizó') AS ABONOS,
+
+NVL(TO_CHAR(SUM(
+CASE
+    WHEN mv.cod_tipo_mov = 2 THEN mv.monto_movimiento
+    ELSE NULL
+END), 'FML99G999G999'), 'No realizó') AS RESCATES
+
+FROM cliente cli
+
+JOIN producto_inversion_cliente pic
+ON cli.nro_cliente = pic.nro_cliente
+
+JOIN movimiento mv
+ON mv.nro_solic_prod = pic.nro_solic_prod
+
+GROUP BY cli.NRO_CLIENTE, cli.NUMRUN, cli.DVRUN, cli.PNOMBRE, cli.SNOMBRE, cli.APPATERNO, cli.APMATERNO
+ORDER BY cli.appaterno, cli.apmaterno;
+
+-- CASO 6 A mezclado con B (resultó)
+
+SELECT
+TO_CHAR(cli.numrun, 'FM09G999G999')||'-'||cli.dvrun AS "RUN CLIENTE",
+INITCAP(cli.pnombre)||' '||INITCAP(cli.snombre)||' '||INITCAP(cli.appaterno)||' '||INITCAP(cli.apmaterno) AS "NOMBRE CLIENTE",
+
+NVL(TO_CHAR(SUM(
+CASE
+    WHEN mov.cod_tipo_mov = 1 THEN mov.monto_movimiento
+    ELSE NULL
+END), 'FML99G999G999'), 'No realizó') AS ABONOS,
+
+NVL(TO_CHAR(SUM(
+CASE
+    WHEN mov.cod_tipo_mov = 2 THEN mov.monto_movimiento
+    ELSE NULL
+END), 'FML99G999G999'), 'No realizó') AS RESCATES
+
+FROM cliente cli
+
+JOIN movimiento mov
+ON cli.nro_cliente = mov.nro_cliente
+
+WHERE EXTRACT(YEAR FROM mov.fecha_movimiento) = &ANNIO_CONSULTA
+
+GROUP BY 
+TO_CHAR(cli.numrun, 'FM09G999G999')||'-'||cli.dvrun,
+INITCAP(cli.pnombre)||' '||INITCAP(cli.snombre)||' '||INITCAP(cli.appaterno)||' '||INITCAP(cli.apmaterno),
+cli.appaterno
+
 ORDER BY cli.appaterno;
