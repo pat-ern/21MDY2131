@@ -68,3 +68,49 @@ ORDER BY
 REGION, cli.appaterno;
 
 --CASO 6 INFORME2
+
+SELECT
+su.id_sucursal, re.nombre_region, pr.nombre_provincia, co.nombre_comuna,
+su.direccion,
+
+COUNT(CASE 
+    WHEN ttc.cod_tptran_tarjeta = 101 THEN ttc.monto_total_transaccion
+    ELSE NULL
+END) AS CANT_COMPRAS,
+
+TO_CHAR(NVL(SUM(CASE 
+    WHEN ttc.cod_tptran_tarjeta = 101 THEN ttc.monto_total_transaccion
+    ELSE NULL
+END),0), 'L9G999G999')
+ AS TOTAL_COMPRAS,
+
+COUNT(CASE 
+    WHEN ttc.cod_tptran_tarjeta = 102 THEN ttc.monto_total_transaccion
+    ELSE NULL
+END) AS CANT_AVANCES,
+
+TO_CHAR(NVL(SUM(CASE 
+    WHEN ttc.cod_tptran_tarjeta = 102 THEN ttc.monto_total_transaccion
+    ELSE NULL
+END),0), 'L9G999G999') AS TOTAL_AVANCES,
+
+COUNT(CASE 
+    WHEN ttc.cod_tptran_tarjeta = 103 THEN ttc.monto_total_transaccion
+    ELSE NULL
+END) AS CANT_SUPER,
+
+TO_CHAR(NVL(SUM(CASE 
+    WHEN ttc.cod_tptran_tarjeta = 103 THEN ttc.monto_total_transaccion
+    ELSE NULL
+END),0), 'L9G999G999') AS TOTAL_SUPER
+
+FROM SUCURSAL_RETAIL SU
+JOIN COMUNA CO ON su.cod_comuna=co.cod_comuna AND su.cod_provincia=co.cod_provincia AND su.cod_region=co.cod_region
+JOIN PROVINCIA PR ON su.cod_provincia=pr.cod_provincia AND su.cod_region=pr.cod_region
+JOIN REGION RE ON su.cod_region=re.cod_region
+LEFT JOIN transaccion_tarjeta_cliente ttc ON su.id_sucursal = ttc.id_sucursal
+
+GROUP BY 
+su.id_sucursal, co.nombre_comuna, pr.nombre_provincia, re.nombre_region,
+su.direccion
+ORDER BY re.nombre_region ;
